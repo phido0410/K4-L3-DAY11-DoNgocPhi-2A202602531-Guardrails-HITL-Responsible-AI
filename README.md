@@ -6,6 +6,53 @@
 
 ---
 
+## Bài nộp
+
+- **Học viên:** Đỗ Ngọc Phi — **MSSV:** 2A202602531
+- **Cách chạy** (từ gốc repo, sau khi `source .venv/bin/activate` và điền `.env`):
+
+```bash
+python src/main.py --part 2   # CP2 — guardrails (offline, in terminal)
+python src/main.py --part 3   # CP3 — outputs/results.json, audit_log.json, metrics.json
+python src/main.py --part 4   # CP4 — outputs/attack_results.json (+ unsafe/guards)
+pytest tests/smoke tests/public -q
+python scripts/grade.py --submission-dir . --out outputs/grade_report.json
+python scripts/demo_chat.py       # demo tương tác: chat thử Blue / Red / Red Advance
+```
+
+> Demo (`scripts/demo_chat.py`): gõ prompt để test tay. `/blue` `/red` `/redadv` đổi agent,
+> `/reset` dựng lại (xoá cửa sổ rate-limit của Blue), `/quit` thoát. Blue hiện lớp nào chặn +
+> nhãn data-flow; Red / Red Advance hiện phân loại leak.
+
+### Kiến trúc phòng thủ (Blue)
+
+```text
+User → RateLimit → InputGuardrail → Blue LLM → OutputGuardrail → Reply
+         │             │                           │
+         │             │ injection (canonicalize:  │ generic credential/PII detectors
+         │             │ NFKC, zero-width, homo-   │ + output variants (decoded, re-joined,
+         │             │ glyph, leet, b64, ROT13)  │   reversed, ROT13, weak-password)
+         │             │ + weak-signal scoring     │ + runtime exact data matching from the
+         │             │ + topic filter (EN/VI)    │   live prompt, canary, n-gram overlap
+         │             │                           │ + gated LLM judge (suspicious replies only)
+         └── audit log + monitoring/alerts; data-flow labels (untrusted / confidential /
+             customer_pii) × sink (reply / egress / action) → allow · redact · HITL · block
+```
+
+- Code: [`src/guardrails/`](src/guardrails/) (CP2 + [`policy.py`](src/guardrails/policy.py)), [`src/assignment/`](src/assignment/) (CP3).
+- Không hardcode giá trị secret trong phòng thủ: mọi detector là pattern generic; giá trị cần bảo vệ được trích từ system prompt **lúc runtime**.
+
+### Thay đổi file starter (cần coach lưu ý)
+
+| File | Thay đổi | Lý do |
+|------|----------|-------|
+| [`src/core/config.py`](src/core/config.py) | `BLUE_MODEL = "liquid/lfm-2.5-2.6b:free"` | Model gốc `liquid/lfm-2.5-2.6b` không còn endpoint trên OpenRouter (HTTP 404); `:free` là cùng model |
+| [`src/agents/agent.py`](src/agents/agent.py) | `BLUE_INSTRUCTION` thêm *VERIFIED FACTS* (đọc từ `ground_truth` trong `data/pii_hallucination_samples.json`) + quy tắc không bịa số | Blue 2.6B bịa lãi suất (ví dụ ~3.5%) — grounding chống hallucination |
+
+> OpenRouter free tier: 50 request/ngày/tài khoản — mỗi lần `--part 3` tốn ~7–10 request.
+
+---
+
 ## Thời lượng
 
 | Phần | Thời gian |
