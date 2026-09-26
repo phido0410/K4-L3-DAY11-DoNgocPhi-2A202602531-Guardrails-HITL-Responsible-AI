@@ -17,12 +17,17 @@ python src/main.py --part 3   # CP3 — outputs/results.json, audit_log.json, me
 python src/main.py --part 4   # CP4 — outputs/attack_results.json (+ unsafe/guards)
 pytest tests/smoke tests/public -q
 python scripts/grade.py --submission-dir . --out outputs/grade_report.json
-python scripts/demo_chat.py       # demo tương tác: chat thử Blue / Red / Red Advance
+python scripts/demo_chat.py       # demo terminal: chat thử Blue / Red / Red Advance
+python scripts/demo_web.py        # demo giao diện HTML → http://127.0.0.1:8000
 ```
 
-> Demo (`scripts/demo_chat.py`): gõ prompt để test tay. `/blue` `/red` `/redadv` đổi agent,
-> `/reset` dựng lại (xoá cửa sổ rate-limit của Blue), `/quit` thoát. Blue hiện lớp nào chặn +
-> nhãn data-flow; Red / Red Advance hiện phân loại leak.
+> Demo terminal (`scripts/demo_chat.py`): gõ prompt để test tay. `/blue` `/red` `/redadv` đổi
+> agent, `/reset` dựng lại (xoá cửa sổ rate-limit của Blue), `/quit` thoát.
+>
+> Demo web (`scripts/demo_web.py`): mở trang chat HTML, chọn agent bằng tab, mỗi câu trả lời
+> hiện badge (lớp nào chặn / redact / nhãn data-flow / judge cho Blue; LEAKED hay chặn cho
+> Red / Red Advance). Server dùng thư viện chuẩn Python và gọi pipeline **thật** (Artifact
+> trên web không chạm được agent local + key trong `.env`). Cần `.env` đã điền.
 
 ### Kiến trúc phòng thủ (Blue)
 
